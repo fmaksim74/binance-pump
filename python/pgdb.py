@@ -83,7 +83,7 @@ def rest_depth_create_table_sql(symbol):
         '"_Bids" JSONB,' \
         '"_Asks" JSONB,' \
         'CONSTRAINT "rest_depth{S}_pkey" PRIMARY KEY ("_rId")); COMMIT;' \
-        'CREATE INDEX IF NOT EXISTS "rest_depth{S}_lupid" ON "rest_depth{S}" ("_lastUpdateId" ASC); COMMIT;'
+        'CREATE INDEX IF NOT EXISTS "rest_depth{S}_lupid" ON "rest_depth{S}" ("_LastUpdateId" ASC); COMMIT;'
     return r.format(S=symbol)
 
 def rest_depth_insert_sql(params, data):
@@ -167,7 +167,6 @@ def rest_kline_insert_sql(params, data):
     r = r.format(S=params['symbol'],I=params['interval'],
                  OT=data[0],O=data[1],H=data[2],L=data[3],C=data[4],V=data[5],
                  CT=data[6],QAV=data[7],NoT=data[8],TBBA=data[9],TBQA=data[10],IG=data[11])
-    print(r)
     return r
 
 def rest_kline_drop_table_sql(symbol, interval):
@@ -196,52 +195,60 @@ def rest_24hr_ticker_create_table_sql(symbol):
         '    "_FirstId" BIGINT,' \
         '    "_LastId" BIGINT,' \
         '    "_Count" BIGINT); COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def rest_24hr_ticker_insert_sql(params, data):
     r = 'INSERT INTO "rest_24hr_ticker{S}" ' \
         '("_PriceChange","_PriceChangePercent","_WeightedAvgPrice","_PrevClosePrice","_LastPrice","_LastQty","_BidPrice","_AskPrice",' \
         '"_OpenPrice","_HighPrice","_LowPrice","_Volume","_QuoteVolume","_OpenTime","_CloseTime","_FirstId","_LastId","_Count") ' \
         'VALUES ({p1},{p2},{p3},{p4},{p5},{p6},{p7},{p8},{p9},{p10},{p11},{p12},{p13},{p14},{p15},{p16},{p17},{p18}) ON CONFLICT DO NOTHING;'
-    return r.format(S=data['symbol'],
-                    p1=data['priceChange'],p2=data['priceChangePercent'],p3=data['weightedAvgPrice'],p4=data['prevClosePrice'],p5=data['lastPrice'],
-                    p6=data['lastQty'],p7=data['bidPrice'],p8=data['askPrice'],p9=data['openPrice'],p10=data['highPrice'],p11=data['lowPrice'],
-                    p12=data['volume'],p13=data['quoteVolume'],p14=data['openTime'],p15=data['closeTime'],p16=data['firstId'],p17=data['lastId'],
-                    p18=data['count'])
+    r = r.format(S=data['symbol'],
+                 p1=data['priceChange'],p2=data['priceChangePercent'],p3=data['weightedAvgPrice'],p4=data['prevClosePrice'],p5=data['lastPrice'],
+                 p6=data['lastQty'],p7=data['bidPrice'],p8=data['askPrice'],p9=data['openPrice'],p10=data['highPrice'],p11=data['lowPrice'],
+                 p12=data['volume'],p13=data['quoteVolume'],p14=data['openTime'],p15=data['closeTime'],p16=data['firstId'],p17=data['lastId'],
+                 p18=data['count'])
+    return r
 
 def rest_24hr_ticker_drop_table_sql(symbol):
     r = 'DROP TABLE IF EXISTS "rest_24hr_ticker{S}"; COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def rest_price_create_table_sql(symbol):
     r = 'CREATE TABLE IF NOT EXISTS "rest_price{S}" (' \
         '"_rId" BIGINT GENERATED ALWAYS AS IDENTITY,' \
         '"_rTime" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,' \
         '"_Price" NUMERIC NOT NULL); COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def rest_price_insert_sql(params, data):
     r = 'INSERT INTO "rest_price{S}" ("_Price") VALUES ({P});'
-    return r.format(S=data['symbol'],P=data['price'])
+    r = r.format(S=data['symbol'],P=data['price'])
+    return r
 
 def rest_price_drop_table_sql(symbol):
     r = 'DROP TABLE IF EXISTS "rest_price{S}"; COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def rest_book_ticker_create_table_sql(symbol):
     r = 'CREATE TABLE IF NOT EXISTS "rest_price{S}" (' \
         '"_rId" BIGINT GENERATED ALWAYS AS IDENTITY,' \
         '"_rTime" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,' \
         '"_Price" NUMERIC NOT NULL); COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def rest_book_ticker_insert_sql(params, data):
     r = 'INSERT INTO "rest_bookTicker{S}" ("_bidPrice","_bidQty","_askPrice","_askQty") VALUES ({bp},{bq},{ap},{aq});'
-    return r.format(S=data['symbol'],bp=data['bidPrice'],bq=data['bidQty'],ap=data['askPrice'],aq=data['askQty'])
+    r = r.format(S=data['symbol'],bp=data['bidPrice'],bq=data['bidQty'],ap=data['askPrice'],aq=data['askQty'])
+    return r
 
 def rest_book_ticker_drop_table_sql(symbol):
-    r = 'DROP TABLE IF EXISTS "rest_price{S}"; COMMIT;'
-    return r.format(S=symbol)
+    r = 'DROP TABLE IF EXISTS "rest_price{S}"; COMMIT;'.format(S=symbol)
+    return r
 
 # WSS tables
 def wss_aggTrade_create_table_sql(symbol):
@@ -257,18 +264,20 @@ def wss_aggTrade_create_table_sql(symbol):
         '"_TradeTime" BIGINT,' \
         '"_IsTheBuyerTheMarketMaker" BOOLEAN,' \
         '"_Ignore" BOOLEAN,' \
-        'CONSTRAINT "wss_aggTrades_EventTime_Unique" UNIQUE("_EventTime")); COMMIT;'
-    return r.format(S=symbol)
+        'CONSTRAINT "wss_aggTrades{S}_EventTime_Unique" UNIQUE("_EventTime")); COMMIT;'
+    r = r.format(S=symbol)
+    return r
 
 def wss_aggTrade_insert_sql(data):
     r = 'INSERT INTO "wss_aggTrade{S}" ' \
         '("_EventTime","_AggregateTradeID","_Price","_Quantity","_FirstTradeID","_LastTradeID","_TradeTime","_IsTheBuyerTheMarketMaker","_Ignore") ' \
         'VALUES ({E},{a},{p},{q},{f},{l},{T},{m},{M}) ON CONFLICT DO NOTHING;'
-    return r.format(S=data['s'],E=data['E'],a=data['a'],p=data['p'],q=data['q'],f=data['f'],l=data['l'],T=data['T'],m=data['m'],M=data['M'])
+    r = r.format(S=data['s'],E=data['E'],a=data['a'],p=data['p'],q=data['q'],f=data['f'],l=data['l'],T=data['T'],m=data['m'],M=data['M'])
+    return r
 
 def wss_aggTrade_drop_table_sql(symbol):
-    r = 'DROP TABLE IF EXISTS "wss_aggTrade{S}"; COMMIT;'
-    return r.format(S=symbol)
+    r = 'DROP TABLE IF EXISTS "wss_aggTrade{S}"; COMMIT;'.format(S=symbol)
+    return r
 
 def wss_trade_create_table_sql(symbol):
     r = 'CREATE TABLE IF NOT EXISTS "wss_trade{S}" (' \
@@ -284,17 +293,20 @@ def wss_trade_create_table_sql(symbol):
         '"_IsTheBuyerTheMarketMaker" BOOLEAN,' \
         '"_Ignore" BOOLEAN,' \
         'CONSTRAINT "wss_trades{S}_EventTime_Unique" UNIQUE("_EventTime")); COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def wss_trade_insert_sql(data):
     r = 'INSERT INTO "wss_trade{S}" ' \
         '("_EventTime","_TradeID","_Price","_Quantity","_BuyerOrderID","_SellerOrderID","_TradeTime","_IsTheBuyerTheMarketMaker","_Ignore") ' \
         'VALUES({E},{t},{p},{q},{b},{a},{T},{m},{M}) ON CONFLICT DO NOTHING;'
-    return r.format(S=data['s'],E=data['E'],t=data['t'],p=data['p'],q=data['q'],b=data['b'],a=data['a'],T=data['T'],m=data['m'],M=data['M'])
+    r = r.format(S=data['s'],E=data['E'],t=data['t'],p=data['p'],q=data['q'],b=data['b'],a=data['a'],T=data['T'],m=data['m'],M=data['M'])
+    return r
 
 def wss_trade_drop_table_sql(symbol):
     r = 'DROP TABLE IF EXISTS "wss_trade{S}"; COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def wss_kline_create_table_sql(symbol, interval):
     r = 'CREATE TABLE IF NOT EXISTS "wss_kline{S}_{I}" (' \
@@ -317,19 +329,21 @@ def wss_kline_create_table_sql(symbol, interval):
         '"_TaherBuyQuoteAssetVolume" NUMERIC,' \
         '"_IgnoreField" BIGINT,' \
         'CONSTRAINT "wss_klines{S}_{I}_EventTime_Unique" UNIQUE("_EventTime")); COMMIT;'
-    return r.format(S=symbol,I=interval)
+    r = r.format(S=symbol,I=interval)
+    return r
 
 def wss_kline_insert_sql(data):
     r = 'INSERT INTO "wss_kline{S}_{I}" ' \
         '("_EventTime","_StartTime","_CloseTime","_FirstTradeId","_LastTradeId","_OpenPrice","_ClosePrice","_HighPrice","_LowPrice",' \
         '"_BaseAssetVolume","_NumberOfTrades","_KlineClosed","_QuoteAssetVolume","_TakerBuyBaseAssetVolume","_TaherBuyQuoteAssetVolume","_IgnoreField") ' \
         'VALUES ({E},{t},{T},{f},{L},{o},{c},{h},{l},{v},{n},{x},{q},{V},{Q},{B}) ON CONFLICT DO NOTHING;'
-    return r.format(S=data['s'],E=data['E'],I=data['k']['i'],t=data['k']['t'],T=data['k']['T'],f=data['k']['f'],L=data['k']['L'],o=data['k']['o'],
+    r = r.format(S=data['s'],E=data['E'],I=data['k']['i'],t=data['k']['t'],T=data['k']['T'],f=data['k']['f'],L=data['k']['L'],o=data['k']['o'],
                     c=data['k']['c'],h=data['k']['h'],l=data['k']['l'],v=data['k']['v'],n=data['k']['n'],x=data['k']['x'],q=data['k']['q'],V=data['k']['V'],Q=data['k']['Q'],B=data['k']['B'])
+    return r
 
 def wss_kline_drop_table_sql(symbol, interval):
-    r = 'DROP TABLE IF EXISTS "wss_kline{S}_{I}"; COMMIT;'
-    return r.format(S=symbol,I=interval)
+    r = 'DROP TABLE IF EXISTS "wss_kline{S}_{I}"; COMMIT;'.format(S=symbol,I=interval)
+    return r
 
 def wss_24hrMiniTicker_create_table_sql(symbol):
     r = 'CREATE TABLE IF NOT EXISTS "wss_24hrMiniTicker{S}" (' \
@@ -343,17 +357,20 @@ def wss_24hrMiniTicker_create_table_sql(symbol):
         '"_TotalTradedBaseAssetVolume" NUMERIC,' \
         '"_TotalTradedQuoteAssetVolume" NUMERIC,' \
         'CONSTRAINT "wss_24hrMiniTicker{S}_EventTime_Unique" UNIQUE("_EventTime")); COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def wss_24hrMiniTicker_insert_sql(data):
     r = 'INSERT INTO "wss_24hrMiniTicker{S}" ' \
         '("_EventTime","_CurrentDayClosePrice","_OpenPrice","_HighPrice","_LowPrice","_TotalTradedBaseAssetVolume","_TotalTradedQuoteAssetVolume") ' \
         'VALUES ({E},{c},{o},{h},{l},{v},{q}) ON CONFLICT DO NOTHING;'
-    return r.format(S=data['s'],E=data['E'],c=data['c'],o=data['o'],h=data['h'],l=data['l'],v=data['v'],q=data['q'])
+    r = r.format(S=data['s'],E=data['E'],c=data['c'],o=data['o'],h=data['h'],l=data['l'],v=data['v'],q=data['q'])
+    return r
 
 def wss_24hrMiniTicker_drop_table_sql(symbol):
     r = 'DROP TABLE IF EXISTS "wss_24hrMiniTicker{S}"; COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def wss_24hrTicker_create_table_sql(symbol):
     r = 'CREATE TABLE IF NOT EXISTS "wss_24hrTicker{S}" (' \
@@ -379,22 +396,24 @@ def wss_24hrTicker_create_table_sql(symbol):
         '"_StatisticsCloseTime" BIGINT,' \
         '"_FirstTradeID" BIGINT,' \
         '"_LastTradeId" BIGINT,' \
-        '"_TotalNumberOfTrades",' \
+        '"_TotalNumberOfTrades" BIGINT,' \
         'CONSTRAINT "wss_24hrTicker{S}_EventTime_Unique" UNIQUE("_EventTime")); COMMIT;'
-    return r.format(S=symbol)
+    r = r.format(S=symbol)
+    return r
 
 def wss_24hrTicker_insert_sql(data):
     r = 'INSERT INTO "wss_24hrTicker{S}" ' \
         '("_EventTime","_PriceChange","_PriceChangePercent","_WeightedAveragePrice","_PreviousDaysClosePrice","_CurrentDaysClosePrice","_CloseTradesQuantity",' \
-        '"_BestBidPrice","_BestBidQuantity","_BestAskPrice"."_BestAskQuantity","_OpenPrice","_HighPrice","_LowPrice","_TotalTradedBaseAssetVolume",' \
+        '"_BestBidPrice","_BestBidQuantity","_BestAskPrice","_BestAskQuantity","_OpenPrice","_HighPrice","_LowPrice","_TotalTradedBaseAssetVolume",' \
         '"_TotalTradedQuoteAssetVolume","_StatisticsOpenTime","_StatisticsCloseTime","_FirstTradeID","_LastTradeId","_TotalNumberOfTrades") ' \
         'VALUES ({E},{p},{P},{w},{x},{c},{Q},{b},{B},{a},{A},{o},{h},{l},{v},{q},{O},{C},{F},{L},{n}) ON CONFLICT DO NOTHING;'
-    return r.format(S=data['s'],E=data['E'],p=data['p'],P=data['P'],w=data['w'],x=data['x'],c=data['c'],Q=data['Q'],b=data['b'],B=data['B'],a=data['a'],
+    r = r.format(S=data['s'],E=data['E'],p=data['p'],P=data['P'],w=data['w'],x=data['x'],c=data['c'],Q=data['Q'],b=data['b'],B=data['B'],a=data['a'],
                     A=data['A'],o=data['o'],h=data['h'],l=data['l'],v=data['v'],q=data['q'],O=data['O'],C=data['C'],F=data['F'],L=data['L'],n=data['n'])
+    return r
 
 def wss_24hrTicker_drop_table_sql(symbol):
-    r = 'DROP TABLE IF EXISTS "wss_24hrTicker{S}";'
-    return r.format(S=symbol)
+    r = 'DROP TABLE IF EXISTS "wss_24hrTicker{S}";'.format(S=symbol)
+    return r
 
 def wss_depth_level_create_table_sql(symbol, level):
     r = 'CREATE TABLE IF NOT EXISTS "wss_depth{S}{L}" (' \
@@ -403,16 +422,18 @@ def wss_depth_level_create_table_sql(symbol, level):
         '"_LastUpdateId" BIGINT,' \
         '"_Bids" JSONB,' \
         '"_Asks" JSONB,' \
-        'CONSTRAINT "wss_depth{S}{L}_EventTime_Unique" UNIQUE("_EventTime")); COMMIT;'
-    return r.format(S=symbol,L=str(level))
+        'CONSTRAINT "wss_depth{S}{L}_EventTime_Unique" UNIQUE("_LastUpdateId")); COMMIT;'
+    r = r.format(S=symbol,L=str(level))
+    return r
 
 def wss_depth_level_insert_sql(params, data):
     r = 'INSERT INTO "wss_depth{S}{L}" ("_LastUpdateId","_Bids","_Asks") VALUES ({lastUpdateId},\'{bids}\',\'{asks}\') ON CONFLICT DO NOTHING;'
-    return r.format(S=params['symbol'],L=str(params['level']),lastUpdateId=data['lastUpdateId'],bids=json.dumps(data['bids']),asks=json.dumps(data['asks']))
+    r = r.format(S=params['symbol'],L=str(params['level']),lastUpdateId=data['lastUpdateId'],bids=json.dumps(data['bids']),asks=json.dumps(data['asks']))
+    return r
 
 def wss_depth_level_drop_table_sql(symbol, level):
-    r = 'DROP TABLE IF EXISTS "wss_depth{S}{L}"; COMMIT;'
-    return r.format(S=symbol,L=str(level))
+    r = 'DROP TABLE IF EXISTS "wss_depth{S}{L}"; COMMIT;'.format(S=symbol,L=str(level))
+    return r
 
 def wss_depth_create_table_sql(symbol):
     r = 'CREATE TABLE IF NOT EXISTS "wss_depth{S}" (' \
@@ -422,7 +443,7 @@ def wss_depth_create_table_sql(symbol):
         '"_FirstUpdateID" BIGINT,' \
         '"_FinalUpdateID" BIGINT,' \
         '"_Bids" JSONB,' \
-        '"_Asks" JSONB,'
+        '"_Asks" JSONB,' \
         'CONSTRAINT "wss_depth{S}_EventTime_Unique" UNIQUE("_EventTime")); COMMIT;'
     return r.format(S=symbol)
 
@@ -511,11 +532,11 @@ class BinanceDB(object):
             self.__cursor.execute(common_schema_save_data_sql(data))
             
     def DropCommonSchema(self):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             self.__cursor.execute(common_schema_drop_sql())
 
     def UpdateCommonSchema(self, data, drop=False): # data - exchangeInfo
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             if drop: self.DropCommonSchema()
             self.CreateCommonSchema(data)
     
@@ -555,7 +576,7 @@ class BinanceDB(object):
                     self.__cursor.execute(symbol_schema_drop_sql(data['symbol']))
 
     def UpdateSymbolSchema(self, data, drop=False):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             if drop:
                 self.DropSymbolSchema(data)
             self.CreateSymbolSchema(data)
@@ -573,11 +594,11 @@ class BinanceDB(object):
                         self.__cursor.execute(rest_symbols_info_insert_sql(symbol))
 
     def restSaveDepth(self, params, data): # params - request params, data - request result
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             self.__cursor.execute(rest_depth_insert_sql(params, data))
     
     def restSaveTrades(self, params, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             if isinstance(data, dict): # single trade record
                 self.__cursor.execute(rest_trades_insert_sql(params, data))
             if isinstance(data, list): # list of trades
@@ -585,7 +606,7 @@ class BinanceDB(object):
                     self.__cursor.execute(rest_trades_insert_sql(params, d))
 
     def restSaveAggTrades(self, params, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             if isinstance(data, dict): # single agg trade record
                 self.__cursor.execute(rest_agg_trades_insert_sql(params, data))
             if isinstance(data, list): # list of agg trades
@@ -593,7 +614,7 @@ class BinanceDB(object):
                     self.__cursor.execute(rest_agg_trades_insert_sql(params, d))
 
     def restSaveKLine(self, params, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             if (isinstance(data, list)) and (len(data) > 0) and (not isinstance(data[0], list)): # data is single kline
                 self.__cursor.execute(rest_kline_insert_sql(params, data))
             if (isinstance(data, list)) and (len(data) > 0) and (isinstance(data[0], list)): # data is list of klines
@@ -601,7 +622,7 @@ class BinanceDB(object):
                     self.__cursor.execute(rest_kline_insert_sql(params, d))
 
     def restSave24hrTicker(self, params, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             if isinstance(data, dict): # data is single ticker 
                 self.__cursor.execute(rest_24hr_ticker_insert_sql(params, data))
             if isinstance(data, list): # data is list of tickers
@@ -609,7 +630,7 @@ class BinanceDB(object):
                     self.__cursor.execute(rest_24hr_ticker_insert_sql(params, d))
 
     def restSavePrice(self, params, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             if isinstance(data, dict): # data is single ticker 
                 self.__cursor.execute(rest_price_insert_sql(params, data))
             if isinstance(data, list): # data is list of tickers
@@ -617,7 +638,7 @@ class BinanceDB(object):
                     self.__cursor.execute(rest_price_insert_sql(params, d))
 
     def restSaveBookTicker(self, params, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             if isinstance(data, dict): # data is single ticker 
                 self.__cursor.execute(rest_book_ticker_insert_sql(params, data))
             if isinstance(data, list): # data is list of tickers
@@ -625,39 +646,41 @@ class BinanceDB(object):
                     self.__cursor.execute(rest_book_ticker_insert_sql(params, d))
 
     def wssSaveAggTrade(self, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             self.__cursor.execute(wss_aggTrade_insert_sql(data))
 
     def wssSaveTrade(self, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             self.__cursor.execute(wss_trade_insert_sql(data))
 
     def wssSaveKLine(self, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             self.__cursor.execute(wss_kline_insert_sql(data))
 
     def wssSave24hrMiniTicker(self, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             self.__cursor.execute(wss_24hrMiniTicker_insert_sql(data))
 
     def wssSave24hrTicker(self, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             self.__cursor.execute(wss_24hrTicker_insert_sql(data))
 
     def wssSaveArr(self, data):
         if (self.__alive) and (data is not None):
             stream = data['stream'].split(sep='@')[0]
             if stream == '!miniTicker':
-                self.wssSave24hrMiniTicker(data['data'])
+                self.__cursor.execute('\n'.join([wss_24hrMiniTicker_insert_sql(d) for d in data['data']]))
+                self.Commit()
             if stream == '!ticker':
-                self.wssSave24hrTicker(data['data'])
+                self.__cursor.execute('\n'.join([wss_24hrTicker_insert_sql(d) for d in data['data']]))
+                self.Commit()
 
     def wssSaveDepthLevel(self, symbol, level, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             self.__cursor.execute(wss_depth_level_insert_sql(data))
 
     def wssSaveDepthDiff(self, data):
-        if (self.__alive):
+        if (self.__alive) and (data is not None):
             self.__cursor.execute(wss_depth_insert_sql(data))
 
     def wssSaveDepth(self, data):
@@ -666,16 +689,18 @@ class BinanceDB(object):
     def wssSaveMsg(self, data):
         if (self.__alive) and (data is not None):
             # Split stream name to symbol name and stream name
+            if not 'stream' in data:
+                print('Data without stream:', data)
             stream = data['stream'].split(sep='@')[1]
-            if stream[1][:len('aggTrade')] == 'aggTrade':
+            if stream[:len('aggTrade')] == 'aggTrade':
                 self.wssSaveAggTrade(data['data'])
-            if stream[1][:len('trade')] == 'trade':
+            if stream[:len('trade')] == 'trade':
                 self.wssSaveTrade(data['data'])
-            if stream[1][:len('kline')] == 'kline':
+            if stream[:len('kline')] == 'kline':
                 self.wssSaveKLine(data['data'])
-            if stream[1] == 'arr':
-                self.SaveArr(data)
-            if stream[1][:len('depth')] == 'depth':
+            if stream == 'arr':
+                self.wssSaveArr(data)
+            if stream[:len('depth')] == 'depth':
                 self.wssSaveDepth(data)
             self.Commit()
 
