@@ -11,7 +11,7 @@ All instructions made with assumption that Ubuntu is used as server OS.
 
 As described in [Apt - PostgreSQL Wiki](https://wiki.postgresql.org/wiki/Apt)
 
-1. Import the repository key from [https://www.postgresql.org/media/keys/ACCC4CF8.asc](https://www.postgresql.org/media/keys/ACCC4CF8.asc):
+*1. Import the repository key from* [https://www.postgresql.org/media/keys/ACCC4CF8.asc](https://www.postgresql.org/media/keys/ACCC4CF8.asc):
 ```
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 ```
@@ -29,11 +29,61 @@ sudo apt-get update
 sudo apt-get upgrade
 sudo apt-get install postgresql-10
 ```
-Alternately, [this](https://salsa.debian.org/postgresql/postgresql-common/raw/master/pgdg/apt.postgresql.org.sh) shell script will automate the repository setup. Note that the shell script leaves the source package repo (deb-src) commented out; if you need source packages, you will need to modify /etc/apt/sources.list.d/pgdg.list to enable it. 
+Alternately, [this](https://salsa.debian.org/postgresql/postgresql-common/raw/master/pgdg/apt.postgresql.org.sh) shell script will automate the repository setup. Note that the shell script leaves the source package repo (deb-src) commented out; if you need source packages, you will need to modify /etc/apt/sources.list.d/pgdg.list to enable it.
 
 2. Initial configuration
 
-Open `psql`:
+Open `psql` cli:
 ```
-sudo -u postgres psql template1
+ sudo -u postgres psql template1
 ```
+Set password for user `postgres`:
+```
+ \password <password>
+```
+Creeate the `binance` user:
+```
+ CREATE USER binance WITH ENCRIPTED PASSWORD '<password>';
+```
+Create the `binancedb` database:
+```
+ CREATE DATABASE "binancedb";
+```
+Set access rights to `binancedb` for user `binance`:
+```
+ GRAND ALL ON "binancedb" TO "binance";
+```
+Change authorization method in `/etc/postgresql/10/main/pg_hba.conf` to enable login with PostgreSQL roles:
+was:
+```
+ # Database administrative login by Unix domain socket
+ local   all             postgres                                peer
+
+ # "local" is for Unix domain socket connections only
+ local   all             all                                     peer
+
+```
+should be:
+```
+ # Database administrative login by Unix domain socket
+ local   all             postgres                                md5
+
+ # "local" is for Unix domain socket connections only
+ local   all             all                                     md5
+
+```
+Enable TCP/IP connections to PostgreSQL in `/etc/postgresql/10/main/postgresql.conf`:
+```
+ listen_addresses = 'localhost'
+```
+Enable IO buffering in `/etc/postgresql/10/main/postgresql.conf`:
+```
+ wal_level = minimal
+ fsync = off
+
+```
+Restart PostgreSQL service:
+```
+ sudo /etc/init.d/postgresql restart
+```
+
