@@ -11,7 +11,7 @@ All instructions made with assumption that Ubuntu is used as server OS.
 
 As described in [Apt - PostgreSQL Wiki](https://wiki.postgresql.org/wiki/Apt)
 
-*1. Import the repository key from* [https://www.postgresql.org/media/keys/ACCC4CF8.asc](https://www.postgresql.org/media/keys/ACCC4CF8.asc):
+_1. Import the repository key from_ [https://www.postgresql.org/media/keys/ACCC4CF8.asc](https://www.postgresql.org/media/keys/ACCC4CF8.asc):
 ```
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 ```
