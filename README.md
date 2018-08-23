@@ -11,7 +11,7 @@ All instructions made with assumption that Ubuntu is used as server OS.
 
 As described in [Apt - PostgreSQL Wiki](https://wiki.postgresql.org/wiki/Apt)
 
-_1. Import the repository key from_ [https://www.postgresql.org/media/keys/ACCC4CF8.asc](https://www.postgresql.org/media/keys/ACCC4CF8.asc):
+**1.1.1. Import the repository key from** [https://www.postgresql.org/media/keys/ACCC4CF8.asc](https://www.postgresql.org/media/keys/ACCC4CF8.asc):
 ```
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 ```
@@ -31,7 +31,7 @@ sudo apt-get install postgresql-10
 ```
 Alternately, [this](https://salsa.debian.org/postgresql/postgresql-common/raw/master/pgdg/apt.postgresql.org.sh) shell script will automate the repository setup. Note that the shell script leaves the source package repo (deb-src) commented out; if you need source packages, you will need to modify /etc/apt/sources.list.d/pgdg.list to enable it.
 
-2. Initial configuration
+**1.1.2. Initial configuration**
 
 Open `psql` cli:
 ```
@@ -40,18 +40,6 @@ Open `psql` cli:
 Set password for user `postgres`:
 ```
  \password <password>
-```
-Creeate the `binance` user:
-```
- CREATE USER binance WITH ENCRIPTED PASSWORD '<password>';
-```
-Create the `binancedb` database:
-```
- CREATE DATABASE "binancedb";
-```
-Set access rights to `binancedb` for user `binance`:
-```
- GRAND ALL ON "binancedb" TO "binance";
 ```
 Change authorization method in `/etc/postgresql/10/main/pg_hba.conf` to enable login with PostgreSQL roles:
 was:
@@ -85,5 +73,36 @@ Enable IO buffering in `/etc/postgresql/10/main/postgresql.conf`:
 Restart PostgreSQL service:
 ```
  sudo /etc/init.d/postgresql restart
+```
+**1.1.3. Setup `binancedb` database:**
+
+Open `psql` cli:
+```
+ psql -U postgres template1
+```
+Creeate the `binance` user:
+```
+ CREATE ROLE binance WITH LOGIN ENCRYPTED PASSWORD '<password>';
+```
+Create the `binancedb` database:
+```
+ CREATE DATABASE "binancedb";
+```
+Set access rights to `binancedb` for user `binance`:
+```
+ GRAND ALL ON "binancedb" TO "binance";
+```
+Initialize `binancedb` database with pgdb.sql script:
+```
+ \i <path to script>/pgdb.sql
+
+```
+Configure binance-pump in bncpump.conf:
+```
+db_host=localhost
+db_port=5432
+db_name=binancedb
+db_user=binance
+db_password=<password>
 ```
 
