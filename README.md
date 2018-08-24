@@ -100,7 +100,7 @@ Configure binance-pump in `bncpump.conf`:
      "host"     : "localhost",
      "port"     : "5432",
      "database" : "binancedb",
-    "user"     : "binance",
+     "user"     : "binance",
      "password" : "<password>"
  }
 ```
