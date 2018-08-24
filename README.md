@@ -13,7 +13,7 @@ As described in [Apt - PostgreSQL Wiki](https://wiki.postgresql.org/wiki/Apt)
 
 **1.1.1. Import the repository key from** [https://www.postgresql.org/media/keys/ACCC4CF8.asc](https://www.postgresql.org/media/keys/ACCC4CF8.asc):
 ```
- wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+ $ wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 ```
 Create /etc/apt/sources.list.d/pgdg.list. The distributions are called codename-pgdg. In the example, replace stretch with the actual distribution you are using:
 ```
@@ -21,13 +21,13 @@ Create /etc/apt/sources.list.d/pgdg.list. The distributions are called codename-
 ```
 (You may determine the codename of your distribution by running lsb_release -c). For a shorthand version of the above, presuming you are using a supported release:
 ```
- sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+ $ sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 ```
 Finally, update the package lists, and start installing packages:
 ```
-sudo apt-get update
-sudo apt-get upgrade
-sudo apt-get install postgresql-10
+ $ sudo apt-get update
+ $ sudo apt-get upgrade
+ $ sudo apt-get install postgresql-10
 ```
 Alternately, [this](https://salsa.debian.org/postgresql/postgresql-common/raw/master/pgdg/apt.postgresql.org.sh) shell script will automate the repository setup. Note that the shell script leaves the source package repo (deb-src) commented out; if you need source packages, you will need to modify /etc/apt/sources.list.d/pgdg.list to enable it.
 
@@ -35,7 +35,7 @@ Alternately, [this](https://salsa.debian.org/postgresql/postgresql-common/raw/ma
 
 Open `psql` cli:
 ```
- sudo -u postgres psql template1
+ $ sudo -u postgres psql template1
 ```
 Set password for user `postgres`:
 ```
@@ -70,13 +70,13 @@ Enable IO buffering in `/etc/postgresql/10/main/postgresql.conf`:
 ```
 Restart PostgreSQL service:
 ```
- sudo /etc/init.d/postgresql restart
+ $ sudo /etc/init.d/postgresql restart
 ```
 **1.1.3. Setup `binancedb` database:**
 
 Open `psql` cli:
 ```
- psql -U postgres template1
+ $ psql -U postgres template1
 ```
 Creeate the `binance` user:
 ```
@@ -95,16 +95,18 @@ Initialize `binancedb` database with `sql/pgdb.sql` script:
  \i <binance-pump root>/sql/pgdb.sql
 ```
 Configure binance-pump in `bncpump.conf`:
-```
-db_host=localhost
-db_port=5432
-db_name=binancedb
-db_user=binance
-db_password=<password>
+```json
+ DATABASE_CONNECTION = {
+     "host"     : "localhost",
+     "port"     : "5432",
+     "database" : "binancedb",
+    "user"     : "binance",
+     "password" : "<password>"
+ }
 ```
 Start `bncpump` with `--initdb` to load symbols and generate tables for them:
 ```
-./bncpump.py --initdb
+ $ ./bncpump.py --initdb
 ```
 Setup data to collect in `bncpump.conf` in `Data to collect` section.
 
