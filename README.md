@@ -13,15 +13,15 @@ As described in [Apt - PostgreSQL Wiki](https://wiki.postgresql.org/wiki/Apt)
 
 **1.1.1. Import the repository key from** [https://www.postgresql.org/media/keys/ACCC4CF8.asc](https://www.postgresql.org/media/keys/ACCC4CF8.asc):
 ```
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+ wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 ```
 Create /etc/apt/sources.list.d/pgdg.list. The distributions are called codename-pgdg. In the example, replace stretch with the actual distribution you are using:
 ```
-deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main
+ deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main
 ```
 (You may determine the codename of your distribution by running lsb_release -c). For a shorthand version of the above, presuming you are using a supported release:
 ```
-sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+ sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 ```
 Finally, update the package lists, and start installing packages:
 ```
@@ -45,19 +45,19 @@ Change authorization method in `/etc/postgresql/10/main/pg_hba.conf` to enable l
 was:
 ```
  # Database administrative login by Unix domain socket
- local   all             postgres                                peer
+ local   all        postgres                      peer
 
  # "local" is for Unix domain socket connections only
- local   all             all                                     peer
+ local   all        all                           peer
 
 ```
 should be:
 ```
  # Database administrative login by Unix domain socket
- local   all             postgres                                md5
+ local   all        postgres                      md5
 
  # "local" is for Unix domain socket connections only
- local   all             all                                     md5
+ local   all        all                           md5
 
 ```
 Enable TCP/IP connections to PostgreSQL in `/etc/postgresql/10/main/postgresql.conf`:
@@ -66,9 +66,7 @@ Enable TCP/IP connections to PostgreSQL in `/etc/postgresql/10/main/postgresql.c
 ```
 Enable IO buffering in `/etc/postgresql/10/main/postgresql.conf`:
 ```
- wal_level = minimal
  fsync = off
-
 ```
 Restart PostgreSQL service:
 ```
@@ -92,12 +90,11 @@ Set access rights to `binancedb` for user `binance`:
 ```
  GRAND ALL ON "binancedb" TO "binance";
 ```
-Initialize `binancedb` database with pgdb.sql script:
+Initialize `binancedb` database with `sql/pgdb.sql` script:
 ```
- \i <path to script>/pgdb.sql
-
+ \i <binance-pump root>/sql/pgdb.sql
 ```
-Configure binance-pump in bncpump.conf:
+Configure binance-pump in `bncpump.conf`:
 ```
 db_host=localhost
 db_port=5432
@@ -105,4 +102,9 @@ db_name=binancedb
 db_user=binance
 db_password=<password>
 ```
+Start `bncpump` with `--initdb` to load symbols and generate tables for them:
+```
+./bncpump.py --initdb
+```
+Setup data to collect in `bncpump.conf` in `Data to collect` section.
 
