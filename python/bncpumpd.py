@@ -2,7 +2,8 @@
 # -*- coding: UTF-8 -*-
 # The Python v3.5 or later required
 
-import errno,json,os,sys
+import arparse,errno,json,os,sys
+from time import sleep,time
 
 CONFIG_FILE = 'bncpump.conf'
 ACTION_START = 'start'
@@ -10,6 +11,7 @@ ACTION_STOP = 'stop'
 ACTION_RELOAD = 'reload'
 ACTION_RESTART = 'restart'
 ACTION_STATUS = 'status'
+TERMINATE = False
 
 def load_config():
     try:
@@ -31,6 +33,12 @@ def parse_command_line():
         r = ACTION_STATUS
     return r
 
+def signal_handler():
+    global TERMINATE
+
+
+    pass
+
 if __name__ == '__main__':
 
     CONFIG = load_config()
@@ -42,15 +50,19 @@ if __name__ == '__main__':
         exit(2)
 
     if ACTION == ACTION_START:
-        new_id = sys.fork()
+        new_id = os.fork()
         if new_id == 0:
+            print('Exit as parent')
             exit()
         if new_id < 0:
             print('FATAL: Daemon start failed')
             exit(2)
         if new_id > 0:
 
-
+            print('Start as daemon')
+            while not TERMINATE:
+                sleep(0.100)
+            print('Exit as daemon')
 
     if ACTION == ACTION_STOP:
         pass
