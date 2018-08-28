@@ -3,15 +3,21 @@
 # The Python v3.5 or later required
 
 from time import sleep
-import daemon
 import lockfile
+import daemon
+import daemon.pidfile
+import os
 
 def do_main():
     while True:
         sleep(0.5)
 
 if __name__ == '__main__':
-    with daemon.DaemonContext():
-        pid_file = lockfile.PIDLockFile('/var/mydaemon/mydaemon.pid')
-        pid_file.acquire(timeout=10)
+    with daemon.DaemonContext(
+        uid=131,
+        gid=136,
+        umask=0o022,
+        chroot_directory=None,
+        working_directory=os.getcwd(),
+        pidfile=daemon.pidfile.PIDLockFile('/var/run/binance/bncpump.pid')):
         do_main()
