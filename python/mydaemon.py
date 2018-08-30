@@ -2,19 +2,26 @@
 # -*- coding: UTF-8 -*-
 # The Python v3.5 or later required
 
-import errno
-from time import sleep
-import lockfile
-import daemon
-import daemon.pidfile
-import os
-from pwd import getpwnam
-import signal
+import logging
 
-def do_main():
-    while True:
-        sleep(0.5)
 
 if __name__ == '__main__':
-    with daemon.DaemonContext():
-        do_main()
+    print(hasattr(logging, 'FATAL'))
+    print(getattr(logging, 'FATAL'))
+#   logger = logging.getLogger('myapp')
+#   logger.setLevel(logging.DEBUG)
+
+#   sh = logging.StreamHandler()
+#   sh.setLevel(logging.DEBUG)
+
+#   fmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+#   sh.setFormatter(fmt)
+
+#   logger.addHandler(sh)
+
+#   logger.debug('debug message')
+#   logger.info('info message')
+#   logger.warn('warn message')
+#   logger.error('error message')
+#   logger.critical('critical message')
