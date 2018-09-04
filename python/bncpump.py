@@ -5,18 +5,16 @@
 from binance.client import Client
 from binance.websockets import BinanceSocketManager
 from bncenums import enum_kline_intervals
-from pgdb import BinanceDB
+from bncpgdb import BinanceDB
 import sys
-
-def main():
 
 if __name__ == '__main__':
 
     bc = Client('','')
     bd = BinanceDB()
     exchinf = bc.get_exchange_info()
-#   bd.UpdateCommonSchema(exchinf)
-#   bd.UpdateSymbolSchema(exchinf)
+    bd.UpdateCommonSchema(exchinf)
+    bd.UpdateSymbolSchema(exchinf)
     trades   = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']]
     klines = [['{symbol}@kline_{interval}'.format(symbol=s['symbol'].lower(),interval=kl) for s in exchinf['symbols']] for kl in enum_kline_intervals]
     minitickers = '!miniTicker@arr'
