@@ -511,7 +511,7 @@ class BinanceDB(object):
     def __init__(self):
         self.__cursor = None
         self.__alive = False
-        self.Connect()
+#       self.Connect()
 
     def __enter__(self): return self
 
@@ -519,9 +519,9 @@ class BinanceDB(object):
         if self.__db_connection is not None:
             self.__db_connection.close()
 
-    def Connect(self):
+    def Connect(self, **kwargs):
         if type(self).__db_connection is None:
-            type(self).__db_connection = psycopg2.connect(dbname='binancedb', user='binance', password='123456', host='localhost')
+            type(self).__db_connection = psycopg2.connect(dbname=database, user=user, password=password, host=host,port=port)
             if (not type(self).__db_connection.closed) and (self.__cursor is None):
                 self.__cursor = type(self).__db_connection.cursor()
                 self.__alive = True

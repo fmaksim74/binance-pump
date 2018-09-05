@@ -96,7 +96,26 @@ def signal_handler(signum, frame):
         LOG.info('SIGTERM signal recieved. Stopping...')
         TERMINATE = True
 
+def make_wss_node_list(key, val):
+    if key == 'default':
+        symbols = 
+
+def make_wss_list(conf):
+    if conf is not None:
+        if conf
+    trades   = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']]
+    klines = [['{symbol}@kline_{interval}'.format(symbol=s['symbol'].lower(),interval=kl) for s in exchinf['symbols']] for kl in enum_kline_intervals]
+    minitickers = '!miniTicker@arr'
+    tickers = '!ticker@arr'
+#   wss_data = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']] + klines + [ minitickers , tickers ]
+    wss_data = klines
+
+
 def DO_MAIN():
+    bncdb = BinanceDB()
+    bncdb.Connect(**CONFIG['DATABASE_CONNECTION'])
+    wss_data = make_wss_list(exchinf)
+
     while not TERMINATE:
         LOG.debug("I'm working")
         sleep(1)

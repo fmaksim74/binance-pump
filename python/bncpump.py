@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 # The Python v3.5 or later required
 
+from time import sleep
 from binance.client import Client
 from binance.websockets import BinanceSocketManager
 from bncenums import enum_kline_intervals
@@ -26,6 +27,16 @@ if __name__ == '__main__':
     # start any sockets here, i.e a trade socket
     conns = [ bm.start_multiplex_socket(d, bd.wssSaveMsg) for d in wss_data ]
     # then start the socket manager
+    bm.daemon = True
     bm.start()
+    try:
+        while True:
+            sleep(1)
+    except KeyboardInterrupt:
+        for conn in conns:
+            bm.stop_socket(conn)
+    finally:
+        print('Stopped')
+
 
 
