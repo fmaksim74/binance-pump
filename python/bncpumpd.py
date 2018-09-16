@@ -26,6 +26,12 @@ DAEMON_INFO = { 'prog': 'bncpumpd',
 ACTIONS = ('initdb','start','status','reload','stop')
 LOG_LEVELS = ('notset','debug','info','warning','error','fatal')
 
+EXCHANGE_INFO = None
+AGGTRADES = list()
+KLINES = list()
+MINITTICKERS = list()
+TICKERS = list()
+TRADES = list()
 
 def parse_args():
     parser = argparse.ArgumentParser(prog=DAEMON_INFO['prog'],
@@ -96,13 +102,33 @@ def signal_handler(signum, frame):
         LOG.info('SIGTERM signal recieved. Stopping...')
         TERMINATE = True
 
-def make_wss_node_list(key, val):
-    if key == 'default':
-        symbols = 
+def SymbolIsTrading(symbol, data):  # data - exchange info
+    for s is data['symbol']:
+        if s['symbol'] == symbol and s['status'] == SYMBOL_STATUS_TRADING:
+            return True
+    return False
 
-def make_wss_list(conf):
-    if conf is not None:
-        if conf
+def make_wss_list():
+    if ('symbols' in CONFIG) and (len(CONFIG['symbols']) != 0):
+        for s in CONFIG['symbols'] 
+            if 'symbol' in s and SymbolIsTrading(s['symbol'], EXCHANGE_INFO):
+                if 'aggTrades' in s and s['aggTrades']:
+                    AGGTRADES.append('{s}@aggTrade'.format(s=s['symbol'].lower()))
+                if 'klines' in s and s['klines'] and 'kline_intervals' in s:
+                    for kl in s['kline_intervals']:
+                        if kl in enum_kline_intervals:
+                            KLINES.append('{s}@kline_{i}'.format(s=s['symbol'].lower(),i=kl.lower()))
+                        else:
+                            LOG.warning('KLine interval {i} incorrect. Skipped.'.format(i=kl.lower()))
+                if 'miniTickers' in s and s['miniTicker']:
+                    MINITICKERS.append('{s}@miniTicker'.format(s=s['symbol'].lower()))
+                if 'tickers' in s and s['ticker']:
+                    MINITICKERS.append('{s}@ticker'.format(s=s['symbol'].lower()))
+            else:
+                LOG.warning('Symbol {s} is not trading. Skipped.'.format(s=s['symbol']))
+
+
+
     trades   = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']]
     klines = [['{symbol}@kline_{interval}'.format(symbol=s['symbol'].lower(),interval=kl) for s in exchinf['symbols']] for kl in enum_kline_intervals]
     minitickers = '!miniTicker@arr'
@@ -110,10 +136,18 @@ def make_wss_list(conf):
 #   wss_data = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']] + klines + [ minitickers , tickers ]
     wss_data = klines
 
-
 def DO_MAIN():
+    global EXCHANGE_INFO
+
     bncdb = BinanceDB()
     bncdb.Connect(**CONFIG['DATABASE_CONNECTION'])
+    bnccli = Client('','')
+
+    EXCHANGE_INFO = bnccli.get_exchange_info()
+    
+    bncdb.UpdateCommonSchema(EXCHANGE_INFO)
+    bncdb.UpdateSymbolSchema(EXCHANGE_INFO)
+
     wss_data = make_wss_list(exchinf)
 
     while not TERMINATE:
