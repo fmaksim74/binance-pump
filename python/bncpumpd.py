@@ -99,11 +99,11 @@ def init_daemon_log(name, fn, level):
 def signal_handler(signum, frame):
     global TERMINATE
     if signum == signal.SIGTERM:
-        LOG.info('SIGTERM signal recieved. Stopping...')
+        LOG.info('SIGTERM recieved. Stopping...')
         TERMINATE = True
 
 def SymbolIsTrading(symbol, data):  # data - exchange info
-    for s is data['symbol']:
+    for s is data['symbols']:
         if s['symbol'] == symbol and s['status'] == SYMBOL_STATUS_TRADING:
             return True
     return False
