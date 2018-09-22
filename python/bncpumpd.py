@@ -109,32 +109,50 @@ def SymbolIsTrading(symbol, data):  # data - exchange info
     return False
 
 def make_wss_list():
-    if ('symbols' in CONFIG) and (len(CONFIG['symbols']) != 0):
-        for s in CONFIG['symbols'] 
+    if ('symbols' in CONFIG['DATA_TO_COLLECT']) and (len(CONFIG['DATA_TO_COLLECT']['symbols']) != 0):
+        for s in CONFIG['DATA_TO_COLLECT']['symbols']: 
             if 'symbol' in s and SymbolIsTrading(s['symbol'], EXCHANGE_INFO):
+
                 if 'aggTrades' in s and s['aggTrades']:
                     AGGTRADES.append('{s}@aggTrade'.format(s=s['symbol'].lower()))
-                if 'klines' in s and s['klines'] and 'kline_intervals' in s:
-                    for kl in s['kline_intervals']:
-                        if kl in enum_kline_intervals:
-                            KLINES.append('{s}@kline_{i}'.format(s=s['symbol'].lower(),i=kl.lower()))
-                        else:
-                            LOG.warning('KLine interval {i} incorrect. Skipped.'.format(i=kl.lower()))
+
+                if 'trades' in s and s['trades']:
+                    TRADES.append('{s}@trade'.format(s=s['symbol'].lower()))
+
+                if 'klines' in s and s['klines']
+                    if 'kline_intervals' in s:
+                        _intervals = s['kline_intervals']
+                        for kl in _intervals:
+                            if not kl in enum_kline_intervals:
+                                LOG.warning('KLine interval {i} incorrect. Skipped.'.format(i=kl.lower()))
+                                _intervals.remove(kl)
+                    else:
+                        _intervals = enum_kline_intervals
+                    for kl in _intervals:
+                        KLINES.append('{s}@kline_{i}'.format(s=s['symbol'].lower(),i=kl.lower()))
+
                 if 'miniTickers' in s and s['miniTicker']:
                     MINITICKERS.append('{s}@miniTicker'.format(s=s['symbol'].lower()))
+
                 if 'tickers' in s and s['ticker']:
-                    MINITICKERS.append('{s}@ticker'.format(s=s['symbol'].lower()))
+                    TICKERS.append('{s}@ticker'.format(s=s['symbol'].lower()))
             else:
                 LOG.warning('Symbol {s} is not trading. Skipped.'.format(s=s['symbol']))
+        else:
+            if 'default' in CONFIG['DATA_TO_COLLECT']:
+                for s in EXCHANGE_INFO: 
+                    if 'aggTrades' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['aggTrades']:
+                        AGGTRADES.append('{s}@aggTrade'.format(s=s['symbol'].lower()))
+                    if 'trades' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['trades']:
+                        TRADES.append('{s}@trade'.format(s=s['symbol'].lower()))
+                    if 'klines' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['klines'] and 'kline_intervals' in s:
+                        for kl in enum_kline_intervals:
+                            KLINES.append('{s}@kline_{i}'.format(s=s['symbol'].lower(),i=kl.lower()))
+                if 'miniTickers' in s and s['miniTicker']:
+                    MINITICKERS.append('!miniTicker@arr')
+                if 'tickers' in s and s['ticker']:
+                    TICKERS.append('!ticker@arr')
 
-
-
-    trades   = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']]
-    klines = [['{symbol}@kline_{interval}'.format(symbol=s['symbol'].lower(),interval=kl) for s in exchinf['symbols']] for kl in enum_kline_intervals]
-    minitickers = '!miniTicker@arr'
-    tickers = '!ticker@arr'
-#   wss_data = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']] + klines + [ minitickers , tickers ]
-    wss_data = klines
 
 def DO_MAIN():
     global EXCHANGE_INFO
