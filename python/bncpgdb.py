@@ -7,6 +7,7 @@ from bncenums import *
 import json
 import psycopg2
 from binance.client import Client
+from logging import getLogger
 
 # REST tables
 def rest_exchange_info_create_table_sql():
@@ -506,11 +507,13 @@ def symbol_schema_drop_sql(symbol):
 class BinanceDB(object):
 
     __db_connection = None
+    __logger = None
     __lastUpdateId = 0
 
     def __init__(self):
         self.__cursor = None
         self.__alive = False
+        self.__logger = getLogger('bncpumpd')
 #       self.Connect()
 
     def __enter__(self): return self
@@ -522,6 +525,7 @@ class BinanceDB(object):
     def Connect(self, **kwargs):
         if type(self).__db_connection is None:
             type(self).__db_connection = psycopg2.connect(dbname=database, user=user, password=password, host=host,port=port)
+            self.__logger.info("I'm in after Connect")
             if (not type(self).__db_connection.closed) and (self.__cursor is None):
                 self.__cursor = type(self).__db_connection.cursor()
                 self.__alive = True

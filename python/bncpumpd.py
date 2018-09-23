@@ -8,6 +8,10 @@ from logging.handlers import RotatingFileHandler
 from pwd import getpwnam
 from time import sleep,time
 from daemon import DaemonContext,pidfile
+from binance.client import Client
+from binance.websockets import BinanceSocketManager
+from bncenums import enum_kline_intervals
+from bncpgdb import BinanceDB
 
 TERMINATE = False
 
@@ -103,7 +107,7 @@ def signal_handler(signum, frame):
         TERMINATE = True
 
 def SymbolIsTrading(symbol, data):  # data - exchange info
-    for s is data['symbols']:
+    for s in data['symbols']:
         if s['symbol'] == symbol and s['status'] == SYMBOL_STATUS_TRADING:
             return True
     return False
@@ -119,7 +123,7 @@ def make_wss_list():
                 if 'trades' in s and s['trades']:
                     TRADES.append('{s}@trade'.format(s=s['symbol'].lower()))
 
-                if 'klines' in s and s['klines']
+                if 'klines' in s and s['klines']:
                     if 'kline_intervals' in s:
                         _intervals = s['kline_intervals']
                         for kl in _intervals:
@@ -155,10 +159,13 @@ def make_wss_list():
 
 
 def DO_MAIN():
+    
+
     global EXCHANGE_INFO
 
     bncdb = BinanceDB()
     bncdb.Connect(**CONFIG['DATABASE_CONNECTION'])
+    LOG.info("I'm there")
     bnccli = Client('','')
 
     EXCHANGE_INFO = bnccli.get_exchange_info()
@@ -172,33 +179,23 @@ def DO_MAIN():
         LOG.debug("I'm working")
         sleep(1)
 
-from binance.client import Client
-from binance.websockets import BinanceSocketManager
-from bncenums import enum_kline_intervals
-from pgdb import BinanceDB
-import sys
-
-def main():
-
-if __name__ == '__main__':
-
-    bc = Client('','')
-    bd = BinanceDB()
-    exchinf = bc.get_exchange_info()
+#   bc = Client('','')
+#   bd = BinanceDB()
+#   exchinf = bc.get_exchange_info()
 #   bd.UpdateCommonSchema(exchinf)
 #   bd.UpdateSymbolSchema(exchinf)
-    trades   = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']]
-    klines = [['{symbol}@kline_{interval}'.format(symbol=s['symbol'].lower(),interval=kl) for s in exchinf['symbols']] for kl in enum_kline_intervals]
-    minitickers = '!miniTicker@arr'
-    tickers = '!ticker@arr'
+#   trades   = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']]
+#   klines = [['{symbol}@kline_{interval}'.format(symbol=s['symbol'].lower(),interval=kl) for s in exchinf['symbols']] for kl in enum_kline_intervals]
+#   minitickers = '!miniTicker@arr'
+#   tickers = '!ticker@arr'
 #   wss_data = [ trades, ] + klines + [ minitickers , tickers ]
-    wss_data = klines
-    
-    bm = BinanceSocketManager(bc)
-    # start any sockets here, i.e a trade socket
-    conns = [ bm.start_multiplex_socket(d, bd.wssSaveMsg) for d in wss_data ]
-    # then start the socket manager
-    bm.start()
+#   wss_data = klines
+#   
+#   bm = BinanceSocketManager(bc)
+#   # start any sockets here, i.e a trade socket
+#   conns = [ bm.start_multiplex_socket(d, bd.wssSaveMsg) for d in wss_data ]
+#   # then start the socket manager
+#   bm.start()
 
 if __name__ == '__main__':
     
