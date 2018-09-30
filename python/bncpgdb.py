@@ -514,7 +514,6 @@ class BinanceDB(object):
         self.__cursor = None
         self.__alive = False
         self.__logger = getLogger('bncpumpd')
-#       self.Connect()
 
     def __enter__(self): return self
 
@@ -524,60 +523,92 @@ class BinanceDB(object):
 
     def Connect(self, **kwargs):
         if type(self).__db_connection is None:
-            type(self).__db_connection = psycopg2.connect(dbname=database, user=user, password=password, host=host,port=port)
-            self.__logger.info("I'm in after Connect")
-            if (not type(self).__db_connection.closed) and (self.__cursor is None):
-                self.__cursor = type(self).__db_connection.cursor()
-                self.__alive = True
+            if 'host' in kwargs and not kwargs['host']:
+                kwargs['database'] = 'localhost'
+            if 'database' in kwargs and not kwargs['database']:
+                kwargs['database'] = 'binancedb'
+            if 'user' in kwargs and not kwargs['user']:
+                kwargs['database'] = 'binance'
+            if 'port' in kwargs and not kwargs['port']:
+                kwargs['port'] = '5432'
+            try:
+                type(self).__db_connection = psycopg2.connect(dbname=kwargs['database'], 
+                                                              user=kwargs['user'],
+                                                              password=kwargs['password'],
+                                                              host=kwargs['host'],
+                                                              port=kwargs['port'])
+                if (not type(self).__db_connection.closed) and (self.__cursor is None):
+                    self.__logger.info("Connection and cursor was opened")
+                    self.__cursor = type(self).__db_connection.cursor()
+                    self.__alive = True
+            except:
+                self.__logger.exception('Exception occurred at connection to database')
+
+
+    def ExecSql(self, strQuery): 
+        try:
+            if (self.__alive) and strQuery:
+                self.__cursor.execute(strQuery)
+            else:
+                self.__logger.warning('BinabnceDB.ExecSql got empty query')
+        except:
+            self.__logger.exception('Exception occurred at query executing:\n{query}'.format(query=strQuery))
+
 
     def CreateCommonSchema(self, data):  # data should be the exchangeInfo
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(common_schema_create_sql())
-            self.__cursor.execute(common_schema_save_data_sql(data))
+            self.__logger.debug("Common schema create started")
+            self.ExecSql(common_schema_create_sql())
+            self.__logger.debug("Common schema create finished")
+            self.__logger.debug("Common data save started")
+            self.ExecSql(common_schema_save_data_sql(data))
+            self.__logger.debug("Common data save finished")
             
     def DropCommonSchema(self):
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(common_schema_drop_sql())
+            self.ExecSql(common_schema_drop_sql())
 
     def UpdateCommonSchema(self, data, drop=False): # data - exchangeInfo
         if (self.__alive) and (data is not None):
+            self.__logger.debug('Common schema update started')
             if drop: self.DropCommonSchema()
             self.CreateCommonSchema(data)
+            self.__logger.debug('Common schema update ended')
     
     def CreateSymbolSchema(self, data):
         if (self.__alive) and (data is not None):
             if isinstance(data, str):  # if data is single string with symbol name
-                self.__cursor.execute(symbol_schema_create_sql(symbol))
+                self.ExecSql(symbol_schema_create_sql(symbol))
             if isinstance(data, list): 
                 for symbol in data: 
                     if isinstance(symbol,str): # if data is string list with symbol names
-                        self.__cursor.execute(symbol_schema_create_sql(symbol))
+                        self.ExecSql(symbol_schema_create_sql(symbol))
                     if isinstance(symbol,dict): # if data is 'symbol' nodes list from exchangeInfo
-                        self.__cursor.execute(symbol_schema_create_sql(symbol['symbol']))
+                        self.ExecSql(symbol_schema_create_sql(symbol['symbol']))
             if isinstance(data, dict): # if data is exchangeInfo
                 if 'symbols' in data:
                     for symbol in data['symbols']: # if data is whole exchangeInfo
-                        self.__cursor.execute(symbol_schema_create_sql(symbol['symbol']))
+                        self.ExecSql(symbol_schema_create_sql(symbol['symbol']))
                 if 'symbol' in data: # if data is symbol node from exchnageInfo only
-                    self.__cursor.execute(symbol_schema_create_sql(data['symbol']))
+                    self.ExecSql(symbol_schema_create_sql(data['symbol']))
                 
 
     def DropSymbolSchema(self, data):
         if (self.__alive) and (data is not None):
             if isinstance(data, str):  # if data is single string with symbol name
-                self.__cursor.execute(symbol_schema_drop_sql(symbol))
+                self.ExecSql(symbol_schema_drop_sql(symbol))
             if isinstance(data, list): 
                 for symbol in data: 
                     if isinstance(symbol,str): # if data is string list with symbol names
-                        self.__cursor.execute(symbol_schema_drop_sql(symbol))
+                        self.ExecSql(symbol_schema_drop_sql(symbol))
                     if isinstance(symbol,dict): # if data is 'symbol' nodes list from exchangeInfo
-                        self.__cursor.execute(symbol_schema_drop_sql(symbol['symbol']))
+                        self.ExecSql(symbol_schema_drop_sql(symbol['symbol']))
             if isinstance(data, dict): # if data is exchangeInfo
                 if 'symbols' in data:
                     for symbol in data['symbols']: # if data is whole exchangeInfo
-                        self.__cursor.execute(symbol_schema_drop_sql(symbol['symbol']))
+                        self.ExecSql(symbol_schema_drop_sql(symbol['symbol']))
                 if 'symbol' in data: # if data is symbol node from exchnageInfo only
-                    self.__cursor.execute(symbol_schema_drop_sql(data['symbol']))
+                    self.ExecSql(symbol_schema_drop_sql(data['symbol']))
 
     def UpdateSymbolSchema(self, data, drop=False):
         if (self.__alive) and (data is not None):
@@ -589,103 +620,103 @@ class BinanceDB(object):
             if isinstance(data, dict):
                 if 'symbols' in data:  # data is exchangeInfo
                     for symbol in data['symbols']:
-                        self.__cursor.execute(rest_symbols_info_insert_sql(symbol))
+                        self.ExecSql(rest_symbols_info_insert_sql(symbol))
                 if 'symbol' in data: # data is symbol node
-                    self.__cursor.execute(rest_symbols_info_insert_sql(data))
+                    self.ExecSql(rest_symbols_info_insert_sql(data))
             if isinstance(data, list): # data is symbols list
                 for symbol in data: 
                     if isinstance(symbol,dict) and ('symbol' in data): # data is 'symbol' node
-                        self.__cursor.execute(rest_symbols_info_insert_sql(symbol))
+                        self.ExecSql(rest_symbols_info_insert_sql(symbol))
 
     def restSaveDepth(self, params, data): # params - request params, data - request result
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(rest_depth_insert_sql(params, data))
+            self.ExecSql(rest_depth_insert_sql(params, data))
     
     def restSaveTrades(self, params, data):
         if (self.__alive) and (data is not None):
             if isinstance(data, dict): # single trade record
-                self.__cursor.execute(rest_trades_insert_sql(params, data))
+                self.ExecSql(rest_trades_insert_sql(params, data))
             if isinstance(data, list): # list of trades
                 for d in data:
-                    self.__cursor.execute(rest_trades_insert_sql(params, d))
+                    self.ExecSql(rest_trades_insert_sql(params, d))
 
     def restSaveAggTrades(self, params, data):
         if (self.__alive) and (data is not None):
             if isinstance(data, dict): # single agg trade record
-                self.__cursor.execute(rest_agg_trades_insert_sql(params, data))
+                self.ExecSql(rest_agg_trades_insert_sql(params, data))
             if isinstance(data, list): # list of agg trades
                 for d in data:
-                    self.__cursor.execute(rest_agg_trades_insert_sql(params, d))
+                    self.ExecSql(rest_agg_trades_insert_sql(params, d))
 
     def restSaveKLine(self, params, data):
         if (self.__alive) and (data is not None):
             if (isinstance(data, list)) and (len(data) > 0) and (not isinstance(data[0], list)): # data is single kline
-                self.__cursor.execute(rest_kline_insert_sql(params, data))
+                self.ExecSql(rest_kline_insert_sql(params, data))
             if (isinstance(data, list)) and (len(data) > 0) and (isinstance(data[0], list)): # data is list of klines
                 for d in data:
-                    self.__cursor.execute(rest_kline_insert_sql(params, d))
+                    self.ExecSql(rest_kline_insert_sql(params, d))
 
     def restSave24hrTicker(self, params, data):
         if (self.__alive) and (data is not None):
             if isinstance(data, dict): # data is single ticker 
-                self.__cursor.execute(rest_24hr_ticker_insert_sql(params, data))
+                self.ExecSql(rest_24hr_ticker_insert_sql(params, data))
             if isinstance(data, list): # data is list of tickers
                 for d in data:
-                    self.__cursor.execute(rest_24hr_ticker_insert_sql(params, d))
+                    self.ExecSql(rest_24hr_ticker_insert_sql(params, d))
 
     def restSavePrice(self, params, data):
         if (self.__alive) and (data is not None):
             if isinstance(data, dict): # data is single ticker 
-                self.__cursor.execute(rest_price_insert_sql(params, data))
+                self.ExecSql(rest_price_insert_sql(params, data))
             if isinstance(data, list): # data is list of tickers
                 for d in data:
-                    self.__cursor.execute(rest_price_insert_sql(params, d))
+                    self.ExecSql(rest_price_insert_sql(params, d))
 
     def restSaveBookTicker(self, params, data):
         if (self.__alive) and (data is not None):
             if isinstance(data, dict): # data is single ticker 
-                self.__cursor.execute(rest_book_ticker_insert_sql(params, data))
+                self.ExecSql(rest_book_ticker_insert_sql(params, data))
             if isinstance(data, list): # data is list of tickers
                 for d in data:
-                    self.__cursor.execute(rest_book_ticker_insert_sql(params, d))
+                    self.ExecSql(rest_book_ticker_insert_sql(params, d))
 
     def wssSaveAggTrade(self, data):
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(wss_aggTrade_insert_sql(data))
+            self.ExecSql(wss_aggTrade_insert_sql(data))
 
     def wssSaveTrade(self, data):
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(wss_trade_insert_sql(data))
+            self.ExecSql(wss_trade_insert_sql(data))
 
     def wssSaveKLine(self, data):
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(wss_kline_insert_sql(data))
+            self.ExecSql(wss_kline_insert_sql(data))
 
     def wssSave24hrMiniTicker(self, data):
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(wss_24hrMiniTicker_insert_sql(data))
+            self.ExecSql(wss_24hrMiniTicker_insert_sql(data))
 
     def wssSave24hrTicker(self, data):
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(wss_24hrTicker_insert_sql(data))
+            self.ExecSql(wss_24hrTicker_insert_sql(data))
 
     def wssSaveArr(self, data):
         if (self.__alive) and (data is not None):
             stream = data['stream'].split(sep='@')[0]
             if stream == '!miniTicker':
-                self.__cursor.execute('\n'.join([wss_24hrMiniTicker_insert_sql(d) for d in data['data']]))
+                self.ExecSql('\n'.join([wss_24hrMiniTicker_insert_sql(d) for d in data['data']]))
                 self.Commit()
             if stream == '!ticker':
-                self.__cursor.execute('\n'.join([wss_24hrTicker_insert_sql(d) for d in data['data']]))
+                self.ExecSql('\n'.join([wss_24hrTicker_insert_sql(d) for d in data['data']]))
                 self.Commit()
 
     def wssSaveDepthLevel(self, symbol, level, data):
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(wss_depth_level_insert_sql(data))
+            self.ExecSql(wss_depth_level_insert_sql(data))
 
     def wssSaveDepthDiff(self, data):
         if (self.__alive) and (data is not None):
-            self.__cursor.execute(wss_depth_insert_sql(data))
+            self.ExecSql(wss_depth_insert_sql(data))
 
     def wssSaveDepth(self, data):
         pass
@@ -694,7 +725,7 @@ class BinanceDB(object):
         if (self.__alive) and (data is not None):
             # Split stream name to symbol name and stream name
             if not 'stream' in data:
-                print('Data without stream:', data)
+                self.__logger.critical('Data without stream:\n {data}'.format(data=data))
             stream = data['stream'].split(sep='@')[1]
             if stream[:len('aggTrade')] == 'aggTrade':
                 self.wssSaveAggTrade(data['data'])
@@ -712,14 +743,5 @@ class BinanceDB(object):
         if (self.__alive):
             self.__cursor.connection.commit()
 
-
-def main():
-    bnc = Client('','')
-    bdb = BinanceDB()
-    exch = bnc.get_exchange_info()
-    bdb.UpdateCommonScheme(exch, True)
-    bdb.UpdateSymbolScheme(exch, True)
-
 if __name__ == '__main__':
-#   main()
     exit()

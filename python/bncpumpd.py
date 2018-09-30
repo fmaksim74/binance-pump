@@ -31,11 +31,12 @@ ACTIONS = ('initdb','start','status','reload','stop')
 LOG_LEVELS = ('notset','debug','info','warning','error','fatal')
 
 EXCHANGE_INFO = None
+
 AGGTRADES = list()
-KLINES = list()
-MINITTICKERS = list()
-TICKERS = list()
 TRADES = list()
+KLINES = list()
+MINITICKERS = list()
+TICKERS = list()
 
 def parse_args():
     parser = argparse.ArgumentParser(prog=DAEMON_INFO['prog'],
@@ -113,89 +114,163 @@ def SymbolIsTrading(symbol, data):  # data - exchange info
     return False
 
 def make_wss_list():
+    
+    res = list()
+
     if ('symbols' in CONFIG['DATA_TO_COLLECT']) and (len(CONFIG['DATA_TO_COLLECT']['symbols']) != 0):
-        for s in CONFIG['DATA_TO_COLLECT']['symbols']: 
-            if 'symbol' in s and SymbolIsTrading(s['symbol'], EXCHANGE_INFO):
 
-                if 'aggTrades' in s and s['aggTrades']:
-                    AGGTRADES.append('{s}@aggTrade'.format(s=s['symbol'].lower()))
+        for symbol in CONFIG['DATA_TO_COLLECT']['symbols']: 
 
-                if 'trades' in s and s['trades']:
-                    TRADES.append('{s}@trade'.format(s=s['symbol'].lower()))
+            if 'symbol' in symbol and SymbolIsTrading(symbol['symbol'], EXCHANGE_INFO):
 
-                if 'klines' in s and s['klines']:
-                    if 'kline_intervals' in s:
-                        _intervals = s['kline_intervals']
-                        for kl in _intervals:
-                            if not kl in enum_kline_intervals:
-                                LOG.warning('KLine interval {i} incorrect. Skipped.'.format(i=kl.lower()))
+                if 'aggTrades' in symbol and symbol['aggTrades']:
+                    s_name = '{s}@aggTrade'.format(s=symbol['symbol'].lower())
+                    AGGTRADES.append(s_name)
+                    res.append(s_name)
+
+                if 'trades' in symbol and symbol['trades']:
+                    s_name = '{s}@trade'.format(s=symbol['symbol'].lower())
+                    TRADES.append(s_name)
+                    res.append(s_name)
+
+                if 'klines' in symbol and symbol['klines']:
+
+                    if 'kline_intervals' in symbol:
+                        _intervals = symbol['kline_intervals']
+
+                        for i in _intervals:
+                            if not i in enum_kline_intervals:
+                                LOG.warning('KLine interval {i} for symbol {s} is incorrect. Skipped.'.format(i=i.lower(),s=symbol['symbol']))
+                                _intervals.remove(i)
+
+                    else:
+                        _intervals = enum_kline_intervals
+
+                    for i in _intervals:
+                        s_name = '{s}@kline_{i}'.format(s=symbol['symbol'].lower(),i=i.lower())
+                        KLINES.append(s_name)
+                        res.append(s_name)
+
+                if 'miniTickers' in symbol and symbol['miniTicker']:
+                    s_name = '{s}@miniTicker'.format(s=symbol['symbol'].lower())
+                    MINITICKERS.append(s_name)
+                    res.append(s_name)
+
+                if 'tickers' in symbol and symbol['ticker']:
+                    s_name = '{s}@ticker'.format(s=symbol['symbol'].lower())
+                    TICKERS.append(s_name)
+                    res.append(s_name)
+
+            else:
+                LOG.warning('Symbol {s} is not trading. Skipped.'.format(s=symbol['symbol']))
+
+    else:
+
+        if 'default' in CONFIG['DATA_TO_COLLECT']:
+
+            _load_agg_trades = 'aggTrades' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['aggTrades']
+
+            _load_trades = 'trades' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['trades']
+
+            _load_klines = 'klines' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['klines']
+
+            if 'kline_intervals' in CONFIG['DATA_TO_COLLECT']['default']:
+                _intervals = CONFIG['DATA_TO_COLLECT']['default']['kline_intervals']
+
+                for i in _intervals:
+                    if not i in enum_kline_intervals:
+                        LOG.warning('KLine interval {i} incorrect. Skipped.'.format(i=i.lower()))
+                        _intervals.remove(i)
+            else:
+                 _intervals = enum_kline_intervals
+
+            for symbol in EXCHANGE_INFO['symbols']: 
+
+                if _load_agg_trades:
+                    s_name = '{s}@aggTrade'.format(s=symbol['symbol'].lower())
+                    AGGTRADES.append(s_name)
+                    res.append(s_name)
+
+                if _load_trades:
+                    s_name = '{s}@trade'.format(s=symbol['symbol'].lower())
+                    TRADES.append(s_name)
+                    res.append(s_name)
+
+                if _load_klines:
+
+                    if 'kline_intervals' in symbol:
+                        _intervals = symbol['kline_intervals']
+
+                        for i in _intervals:
+                            if not i in enum_kline_intervals:
+                                LOG.warning('KLine interval {i} in default options is incorrect. Skipped.'.format(i=i.lower()))
                                 _intervals.remove(kl)
                     else:
                         _intervals = enum_kline_intervals
-                    for kl in _intervals:
-                        KLINES.append('{s}@kline_{i}'.format(s=s['symbol'].lower(),i=kl.lower()))
 
-                if 'miniTickers' in s and s['miniTicker']:
-                    MINITICKERS.append('{s}@miniTicker'.format(s=s['symbol'].lower()))
+                    for i in enum_kline_intervals:
+                        s_name = '{s}@kline_{i}'.format(s=symbol['symbol'].lower(),i=i.lower())
+                        KLINES.append(s_name)
+                        res.append(s_name)
 
-                if 'tickers' in s and s['ticker']:
-                    TICKERS.append('{s}@ticker'.format(s=s['symbol'].lower()))
-            else:
-                LOG.warning('Symbol {s} is not trading. Skipped.'.format(s=s['symbol']))
-        else:
-            if 'default' in CONFIG['DATA_TO_COLLECT']:
-                for s in EXCHANGE_INFO: 
-                    if 'aggTrades' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['aggTrades']:
-                        AGGTRADES.append('{s}@aggTrade'.format(s=s['symbol'].lower()))
-                    if 'trades' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['trades']:
-                        TRADES.append('{s}@trade'.format(s=s['symbol'].lower()))
-                    if 'klines' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['klines'] and 'kline_intervals' in s:
-                        for kl in enum_kline_intervals:
-                            KLINES.append('{s}@kline_{i}'.format(s=s['symbol'].lower(),i=kl.lower()))
-                if 'miniTickers' in s and s['miniTicker']:
-                    MINITICKERS.append('!miniTicker@arr')
-                if 'tickers' in s and s['ticker']:
-                    TICKERS.append('!ticker@arr')
+            if 'miniTickers' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['miniTickers']:
+                s_name = '!miniTicker@arr'
+                MINITICKERS.append(s_name)
+                res.append(s_name)
 
+            if 'tickers' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['tickers']:
+                s_name = '!ticker@arr'
+                TICKERS.append(s_name)
+                res.append(s_name)
+
+    return res
 
 def DO_MAIN():
     
-
     global EXCHANGE_INFO
 
-    bncdb = BinanceDB()
-    bncdb.Connect(**CONFIG['DATABASE_CONNECTION'])
-    LOG.info("I'm there")
-    bnccli = Client('','')
+    try:
+        fail_msg = "Exception occurred at database engine initialization\n"
+        bncdb = BinanceDB()
+        bncdb.Connect(**CONFIG['DATABASE_CONNECTION'])
 
-    EXCHANGE_INFO = bnccli.get_exchange_info()
-    
-    bncdb.UpdateCommonSchema(EXCHANGE_INFO)
-    bncdb.UpdateSymbolSchema(EXCHANGE_INFO)
+        fail_msg = "Exception occurred at exchange client engine initialization\n"
+        bnccli = Client('','')
 
-    wss_data = make_wss_list(exchinf)
+        fail_msg = "Exception occurred at exchangeInfo request\n"
+        EXCHANGE_INFO = bnccli.get_exchange_info()
 
-    while not TERMINATE:
-        LOG.debug("I'm working")
-        sleep(1)
 
-#   bc = Client('','')
-#   bd = BinanceDB()
-#   exchinf = bc.get_exchange_info()
-#   bd.UpdateCommonSchema(exchinf)
-#   bd.UpdateSymbolSchema(exchinf)
-#   trades   = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']]
-#   klines = [['{symbol}@kline_{interval}'.format(symbol=s['symbol'].lower(),interval=kl) for s in exchinf['symbols']] for kl in enum_kline_intervals]
-#   minitickers = '!miniTicker@arr'
-#   tickers = '!ticker@arr'
-#   wss_data = [ trades, ] + klines + [ minitickers , tickers ]
-#   wss_data = klines
-#   
-#   bm = BinanceSocketManager(bc)
-#   # start any sockets here, i.e a trade socket
-#   conns = [ bm.start_multiplex_socket(d, bd.wssSaveMsg) for d in wss_data ]
-#   # then start the socket manager
-#   bm.start()
+        fail_msg = "Exception occurred at common schema update\n"
+        bncdb.UpdateCommonSchema(EXCHANGE_INFO)
+
+        fail_msg = "Exception occurred at symbols schema update\n"
+        bncdb.UpdateSymbolSchema(EXCHANGE_INFO)
+
+        fail_msg = "Exception occurred at binance socket manager initialization\n"
+        bncwsm = BinanceSocketManager(bnccli)
+
+        fail_msg = "Exception occurred at WSS streams names generation\n"
+        wss_data = make_wss_list()
+
+        fail_msg = "Exception occurred at WSS streams open.\n"
+        conns = [ bncwsm.start_multiplex_socket(data, bncdb.wssSaveMsg) for data in wss_data ]
+        bncwsm.daemon = True
+
+        fail_msg = "Exception occurred at socket manager start"
+        bncwsm.start()
+
+        while not TERMINATE: sleep(1)
+
+        LOG.debug("Terminating")
+        fail_msg = "Exception occurred at connections close\n"
+        for conn in conns: bncwsm.stop_socket(conn)
+        LOG.debug("Joining bncwsm")
+        bncwsm.join()
+        LOG.debug("Join finished")
+
+    except:
+        LOG.exception(fail_msg)
 
 if __name__ == '__main__':
     
