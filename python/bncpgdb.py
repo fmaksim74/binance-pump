@@ -557,12 +557,12 @@ class BinanceDB(object):
 
     def CreateCommonSchema(self, data):  # data should be the exchangeInfo
         if (self.__alive) and (data is not None):
-            self.__logger.debug("Common schema create started")
+#           self.__logger.debug("Common schema create started")
             self.ExecSql(common_schema_create_sql())
-            self.__logger.debug("Common schema create finished")
-            self.__logger.debug("Common data save started")
+#           self.__logger.debug("Common schema create finished")
+#           self.__logger.debug("Common data save started")
             self.ExecSql(common_schema_save_data_sql(data))
-            self.__logger.debug("Common data save finished")
+#           self.__logger.debug("Common data save finished")
             
     def DropCommonSchema(self):
         if (self.__alive) and (data is not None):
@@ -722,6 +722,7 @@ class BinanceDB(object):
         pass
 
     def wssSaveMsg(self, data):
+#       self.__logger.debug("Data reseived")
         if (self.__alive) and (data is not None):
             # Split stream name to symbol name and stream name
             if not 'stream' in data:

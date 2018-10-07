@@ -115,8 +115,6 @@ def SymbolIsTrading(symbol, data):  # data - exchange info
 
 def make_wss_list():
     
-    res = list()
-
     if ('symbols' in CONFIG['DATA_TO_COLLECT']) and (len(CONFIG['DATA_TO_COLLECT']['symbols']) != 0):
 
         for symbol in CONFIG['DATA_TO_COLLECT']['symbols']: 
@@ -126,12 +124,10 @@ def make_wss_list():
                 if 'aggTrades' in symbol and symbol['aggTrades']:
                     s_name = '{s}@aggTrade'.format(s=symbol['symbol'].lower())
                     AGGTRADES.append(s_name)
-                    res.append(s_name)
 
                 if 'trades' in symbol and symbol['trades']:
                     s_name = '{s}@trade'.format(s=symbol['symbol'].lower())
                     TRADES.append(s_name)
-                    res.append(s_name)
 
                 if 'klines' in symbol and symbol['klines']:
 
@@ -149,17 +145,14 @@ def make_wss_list():
                     for i in _intervals:
                         s_name = '{s}@kline_{i}'.format(s=symbol['symbol'].lower(),i=i.lower())
                         KLINES.append(s_name)
-                        res.append(s_name)
 
                 if 'miniTickers' in symbol and symbol['miniTicker']:
                     s_name = '{s}@miniTicker'.format(s=symbol['symbol'].lower())
                     MINITICKERS.append(s_name)
-                    res.append(s_name)
 
                 if 'tickers' in symbol and symbol['ticker']:
                     s_name = '{s}@ticker'.format(s=symbol['symbol'].lower())
                     TICKERS.append(s_name)
-                    res.append(s_name)
 
             else:
                 LOG.warning('Symbol {s} is not trading. Skipped.'.format(s=symbol['symbol']))
@@ -189,12 +182,10 @@ def make_wss_list():
                 if _load_agg_trades:
                     s_name = '{s}@aggTrade'.format(s=symbol['symbol'].lower())
                     AGGTRADES.append(s_name)
-                    res.append(s_name)
 
                 if _load_trades:
                     s_name = '{s}@trade'.format(s=symbol['symbol'].lower())
                     TRADES.append(s_name)
-                    res.append(s_name)
 
                 if _load_klines:
 
@@ -211,19 +202,18 @@ def make_wss_list():
                     for i in enum_kline_intervals:
                         s_name = '{s}@kline_{i}'.format(s=symbol['symbol'].lower(),i=i.lower())
                         KLINES.append(s_name)
-                        res.append(s_name)
 
             if 'miniTickers' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['miniTickers']:
                 s_name = '!miniTicker@arr'
                 MINITICKERS.append(s_name)
-                res.append(s_name)
 
             if 'tickers' in CONFIG['DATA_TO_COLLECT']['default'] and CONFIG['DATA_TO_COLLECT']['default']['tickers']:
                 s_name = '!ticker@arr'
                 TICKERS.append(s_name)
-                res.append(s_name)
 
-    return res
+#   return [data for data in [AGGTRADES, TRADES, KLINES, MINITICKERS, TICKERS] if len(data) > 0]
+    return [data for data in [TICKERS, ] if len(data) > 0]
+    
 
 def DO_MAIN():
     
@@ -252,6 +242,7 @@ def DO_MAIN():
 
         fail_msg = "Exception occurred at WSS streams names generation\n"
         wss_data = make_wss_list()
+        LOG.debug(wss_data)
 
         fail_msg = "Exception occurred at WSS streams open.\n"
         conns = [ bncwsm.start_multiplex_socket(data, bncdb.wssSaveMsg) for data in wss_data ]
@@ -265,9 +256,8 @@ def DO_MAIN():
         LOG.debug("Terminating")
         fail_msg = "Exception occurred at connections close\n"
         for conn in conns: bncwsm.stop_socket(conn)
-        LOG.debug("Joining bncwsm")
-        bncwsm.join()
-        LOG.debug("Join finished")
+        LOG.debug("Stopping connection manager")
+        bncwsm.close()
 
     except:
         LOG.exception(fail_msg)
@@ -322,9 +312,3 @@ if __name__ == '__main__':
             LOG.error('Cannot remove PID file {fname}'.format(fname=CONFIG['DAEMON_OPTIONS']['pid_file']))
     
         LOG.info('Exit')
-
-
-
-
-
-

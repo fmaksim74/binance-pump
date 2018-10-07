@@ -9,22 +9,25 @@ from bncenums import enum_kline_intervals
 from bncpgdb import BinanceDB
 import sys
 
-def run_pump(**kwargs):
-    bd = BinanceDB()
-    bc = Client('','')
-    exchinf = bc.get_exchange_info()
-    bd.UpdateCommonSchema(exchinf)
-    bd.UpdateSymbolSchema(exchinf)
+#def run_pump(**kwargs):
+#    bd = BinanceDB()
+#    bc = Client('','')
+#    exchinf = bc.get_exchange_info()
+#    bd.UpdateCommonSchema(exchinf)
+#    bd.UpdateSymbolSchema(exchinf)
     
 
 if __name__ == '__main__':
 
+    bd = BinanceDB()
+    bc = Client('','')
+    exchinf = bc.get_exchange_info()
     trades   = ['{symbol}@trade'.format(symbol=s['symbol'].lower()) for s in exchinf['symbols']]
     klines = [['{symbol}@kline_{interval}'.format(symbol=s['symbol'].lower(),interval=kl) for s in exchinf['symbols']] for kl in enum_kline_intervals]
     minitickers = '!miniTicker@arr'
     tickers = '!ticker@arr'
 #   wss_data = [ trades, ] + klines + [ minitickers , tickers ]
-    wss_data = klines
+    wss_data = tickers
     
     bm = BinanceSocketManager(bc)
     # start any sockets here, i.e a trade socket
