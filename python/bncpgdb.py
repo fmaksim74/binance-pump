@@ -540,6 +540,7 @@ class BinanceDB(object):
                 if (not type(self).__db_connection.closed) and (self.__cursor is None):
                     self.__logger.info("Connection and cursor was opened")
                     self.__cursor = type(self).__db_connection.cursor()
+
                     self.__alive = True
             except:
                 self.__logger.exception('Exception occurred at connection to database')
